@@ -14,7 +14,7 @@ sim_params = {
     "rho2": 2.0,
     "nu": 0.0,
     "kappa": 0.0,
-    "dt_init": 0.01,
+    "dt_init": 0.005,
     "tmax": 2.0,
 }
 

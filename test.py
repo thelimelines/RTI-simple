@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Simulation of the Rayleigh–Taylor instability using a pseudospectral method with optional GIF animation.
+Simulation of the Rayleigh-Taylor instability using a pseudospectral method with optional GIF animation.
 """
+
 import logging
 from pathlib import Path
 
@@ -13,10 +14,10 @@ import matplotlib.pyplot as plt
 import imageio
 
 # User-configurable flags (for in-code configuration)
-ANIMATE = True             # Set to True to generate GIF animation, False to save raw .npy frames
-ANIM_DT = 0.01             # Time interval between frames in animation
+ANIMATE = True  # Set to True to generate GIF animation, False to save raw .npy frames
+ANIM_DT = 0.01  # Time interval between frames in animation
 FRAME_DIR = "logged_frames"  # Directory for output frames, logs, and animation
-GIF_NAME = "animation.gif"   # Filename for the output GIF
+GIF_NAME = "animation.gif"  # Filename for the output GIF
 
 
 def save_animation(frames: list[np.ndarray], filename: Path, fps: int = 10) -> None:
@@ -40,7 +41,7 @@ def save_animation(frames: list[np.ndarray], filename: Path, fps: int = 10) -> N
 
 def main() -> None:
     """
-    Run the Rayleigh–Taylor instability simulation.
+    Run the Rayleigh-Taylor instability simulation.
 
     This function supports optional GIF animation to reduce disk I/O by
     capturing frames at specified intervals and assembling them upon
@@ -55,16 +56,16 @@ def main() -> None:
         None
     """
     # User-configurable parameters
-    Nx: int = 128        # Grid points in each dimension
-    Lx: float = 1.0      # Domain size in x
-    Ly: float = 1.0      # Domain size in y
-    g: float = 9.81      # Gravity acceleration
-    rho1: float = 1.0    # Density of bottom fluid
-    rho2: float = 2.0    # Density of top fluid
-    nu: float = 0.0      # Kinematic viscosity
-    kappa: float = 0.0   # Density diffusivity
+    Nx: int = 128  # Grid points in each dimension
+    Lx: float = 1.0  # Domain size in x
+    Ly: float = 1.0  # Domain size in y
+    g: float = 9.81  # Gravity acceleration
+    rho1: float = 1.0  # Density of bottom fluid
+    rho2: float = 2.0  # Density of top fluid
+    nu: float = 0.0  # Kinematic viscosity
+    kappa: float = 0.0  # Density diffusivity
     dt_init: float = 0.005  # Initial time step
-    tmax: float = 2.0       # Total simulation time
+    tmax: float = 2.0  # Total simulation time
 
     animate = ANIMATE
     anim_dt = ANIM_DT
@@ -78,14 +79,11 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Configure logging to file and console
-    log_file = output_dir / 'simulation.log'
+    log_file = output_dir / "simulation.log"
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s %(levelname)s: %(message)s',
-        handlers=[
-            logging.FileHandler(log_file),
-            logging.StreamHandler()
-        ]
+        format="%(asctime)s %(levelname)s: %(message)s",
+        handlers=[logging.FileHandler(log_file), logging.StreamHandler()],
     )
     logger = logging.getLogger()
 
@@ -95,27 +93,23 @@ def main() -> None:
     dy: float = Ly / Ny
     x = np.linspace(0, Lx, Nx, endpoint=False)
     y = np.linspace(0, Ly, Ny, endpoint=False)
-    X, Y = np.meshgrid(x, y, indexing='ij')
+    X, Y = np.meshgrid(x, y, indexing="ij")
 
     kx = 2 * np.pi * np.fft.fftfreq(Nx, d=dx)
     ky = 2 * np.pi * np.fft.fftfreq(Ny, d=dy)
-    kx_mesh, ky_mesh = np.meshgrid(kx, ky, indexing='ij')
+    kx_mesh, ky_mesh = np.meshgrid(kx, ky, indexing="ij")
     K2 = kx_mesh**2 + ky_mesh**2
     K2[0, 0] = 1.0  # avoid division by zero in Poisson solve
 
     # 2/3-rule dealiasing mask
     kmax = np.max(np.abs(kx))
-    mask = (
-        (np.abs(kx_mesh) <= 2/3 * kmax) &
-        (np.abs(ky_mesh) <= 2/3 * kmax)
-    )
+    mask = (np.abs(kx_mesh) <= 2 / 3 * kmax) & (np.abs(ky_mesh) <= 2 / 3 * kmax)
 
     # Initialize fields
     rho0 = 0.5 * (rho1 + rho2)
     rho = np.where(Y > Ly / 2, rho2, rho1)
     rho += (
-        0.01 * np.cos(2 * np.pi * X / Lx) *
-        np.exp(-((Y - Ly / 2) / (0.05 * Ly))**2)
+        0.01 * np.cos(2 * np.pi * X / Lx) * np.exp(-(((Y - Ly / 2) / (0.05 * Ly)) ** 2))
     )
     omega = np.zeros_like(rho)
 
@@ -124,7 +118,9 @@ def main() -> None:
     t: float = 0.0
     frame_idx: int = 0
 
-    logger.info(f"Starting simulation: Nx={Nx}, dt_init={dt_init}, tmax={tmax} (animate={animate})")
+    logger.info(
+        f"Starting simulation: Nx={Nx}, dt_init={dt_init}, tmax={tmax} (animate={animate})"
+    )
 
     # Animation buffer
     anim_frames: list[np.ndarray] = []
@@ -171,10 +167,7 @@ def main() -> None:
         lap_omega = np.real(ifft2(-K2 * w_hat))
 
         # RHS of vorticity and density equations
-        domega = (
-            -(u * omega_x + v * omega_y) +
-            (g / rho0) * rho_x + nu * lap_omega
-        )
+        domega = -(u * omega_x + v * omega_y) + (g / rho0) * rho_x + nu * lap_omega
         drho = -(u * rho_x + v * rho_y) + kappa * lap_rho
 
         # RK2 predictor
@@ -200,8 +193,7 @@ def main() -> None:
         lap_omega1 = np.real(ifft2(-K2 * w1_hat))
 
         domega1 = (
-            -(u1 * omega1_x + v1 * omega1_y) +
-            (g / rho0) * rho1_x + nu * lap_omega1
+            -(u1 * omega1_x + v1 * omega1_y) + (g / rho0) * rho1_x + nu * lap_omega1
         )
         drho1 = -(u1 * rho1_x + v1 * rho1_y) + kappa * lap_rho1
 
